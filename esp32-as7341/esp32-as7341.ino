@@ -12,7 +12,7 @@ Adafruit_AS7341 as7341;
 
 const int led = 2;
 const char* mdns_name = "esp32-as7341";
-const char* usage = "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&ledma=[0, even numbers 4-150]";
+const char* usage = "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&led_ma=[0, even numbers 4-150]&[optional]led_stay_on=[0,1]\n";
 
 void handleRoot() {
   digitalWrite(led, 1);
@@ -23,8 +23,9 @@ void handleRoot() {
 void handleSensorRead() {
   int32_t atime=-1;
   int32_t astep=-1;
-  int32_t ledma=-1;
+  int32_t led_ma=-1;
   int32_t gain=-1;
+  int32_t led_stay_on=0;
 
   digitalWrite(led, 1);
   for (uint8_t i = 0; i < server.args(); i++) {
@@ -37,19 +38,23 @@ void handleSensorRead() {
     if (0==server.argName(i).compareTo("gain")) {
       gain = server.arg(i).toInt();
     }
-    if (0==server.argName(i).compareTo("ledma")) {
-      ledma = server.arg(i).toInt();
+    if (0==server.argName(i).compareTo("led_ma")) {
+      led_ma = server.arg(i).toInt();
+    }
+    if (0==server.argName(i).compareTo("led_stay_on")) {
+      led_stay_on = server.arg(i).toInt();
     }
   }
   if ((atime >= 0 && atime <= 255) &&
       (astep >= 0 && astep <= 65534) &&
       (gain  >= 0 && gain  <= 9) &&
-      (ledma == 0 || (ledma >= 4 && ledma <= 150 && (0 == ledma%2)))) {
+      (led_ma == 0 || (led_ma >= 4 && led_ma <= 150 && (0 == led_ma%2))) &&
+      (led_stay_on == 0 || led_stay_on == 1)) {
     uint16_t readings[12];
 
-    if (ledma > 0) {
+    if (led_ma > 0) {
       as7341.enableLED(true);
-      as7341.setLEDCurrent(ledma);
+      as7341.setLEDCurrent(led_ma);
     } else {
       as7341.enableLED(false);
     }
@@ -131,8 +136,8 @@ void handleSensorRead() {
       response += "    \"gain\" : ";
       response += (1 << gain);
       response += ",\n";
-      response += "    \"ledma\" : ";
-      response += ledma;
+      response += "    \"led_ma\" : ";
+      response += led_ma;
       response += "\n";
       response += "  }\n";
       response += "}\n";
@@ -141,7 +146,9 @@ void handleSensorRead() {
       server.send(500, "text/plain", "Failed readAllChannels()");
     }
 
-    as7341.enableLED(false);
+    if(!led_stay_on) {
+      as7341.enableLED(false);
+    }
   } else {
     server.send(400, "text/plain", usage);
   }
