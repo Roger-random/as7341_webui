@@ -2,9 +2,7 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
-
-const char* ssid = "........";
-const char* password = "........";
+#include "secrets.h"
 
 WebServer server(80);
 
@@ -52,7 +50,7 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("esp32")) {
+  if (MDNS.begin("esp32-as7341")) {
     Serial.println("MDNS responder started");
   }
 
