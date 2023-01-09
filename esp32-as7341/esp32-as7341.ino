@@ -6,11 +6,12 @@
 
 WebServer server(80);
 
-const int led = 13;
+const int led = 2;
+const char* mdns_name = "esp32-as7341";
 
 void handleRoot() {
   digitalWrite(led, 1);
-  server.send(200, "text/plain", "hello from esp32!");
+  server.send(200, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[4-150]");
   digitalWrite(led, 0);
 }
 
@@ -39,7 +40,7 @@ void setup(void) {
   WiFi.begin(ssid, password);
   Serial.println("");
 
-  // Wait for connection
+  // Wait for WiFi connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -50,16 +51,16 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("esp32-as7341")) {
-    Serial.println("MDNS responder started");
+  // Start mDNS so we are reachable via mdns_name as well
+  // as IP address printed above.
+  if (MDNS.begin(mdns_name)) {
+    Serial.print("MDNS responder started as http://");
+    Serial.print(mdns_name);
+    Serial.println(".local");
   }
 
+  // Register routes then start HTTP server
   server.on("/", handleRoot);
-
-  server.on("/inline", []() {
-    server.send(200, "text/plain", "this works as well");
-  });
-
   server.onNotFound(handleNotFound);
 
   server.begin();
