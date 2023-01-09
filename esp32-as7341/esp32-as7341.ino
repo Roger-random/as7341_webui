@@ -15,6 +15,47 @@ void handleRoot() {
   digitalWrite(led, 0);
 }
 
+void handleSensorRead() {
+  int32_t atime=-1;
+  int32_t astep=-1;
+  int32_t ledma=-1;
+
+  digitalWrite(led, 1);
+  for (uint8_t i = 0; i < server.args(); i++) {
+    if (0==server.argName(i).compareTo("atime")) {
+      atime = server.arg(i).toInt();
+    }
+    if (0==server.argName(i).compareTo("astep")) {
+      astep = server.arg(i).toInt();
+    }
+    if (0==server.argName(i).compareTo("ledma")) {
+      ledma = server.arg(i).toInt();
+    }
+  }
+  if ((atime >= 0 && atime <= 255) &&
+      (astep >= 0 && astep <= 65534) &&
+      (ledma >= 4 && ledma <= 150)) {
+    String response = "{\n";
+    response += "  'settings' : {\n";
+    response += "    'atime' : ";
+    response += atime;
+    response += ",\n";
+    response += "    'astep' : ";
+    response += astep;
+    response += ",\n";
+    response += "    'ledma' : ";
+    response += ledma;
+    response += "\n";
+    response += "  }\n";
+    response += "}\n";
+    server.send(200, "application/json", response);
+  } else {
+    server.send(400, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[4-150]");
+  }
+
+  digitalWrite(led, 0);
+}
+
 void handleNotFound() {
   digitalWrite(led, 1);
   String message = "File Not Found\n\n";
@@ -61,6 +102,7 @@ void setup(void) {
 
   // Register routes then start HTTP server
   server.on("/", handleRoot);
+  server.on("/as7341", handleSensorRead);
   server.onNotFound(handleNotFound);
 
   server.begin();
