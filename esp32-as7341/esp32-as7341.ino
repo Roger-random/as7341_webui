@@ -11,7 +11,7 @@ const char* mdns_name = "esp32-as7341";
 
 void handleRoot() {
   digitalWrite(led, 1);
-  server.send(200, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[4-150]");
+  server.send(200, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[0, 4-150]");
   digitalWrite(led, 0);
 }
 
@@ -34,7 +34,7 @@ void handleSensorRead() {
   }
   if ((atime >= 0 && atime <= 255) &&
       (astep >= 0 && astep <= 65534) &&
-      (ledma >= 4 && ledma <= 150)) {
+      (ledma == 0 || (ledma >= 4 && ledma <= 150))) {
     String response = "{\n";
     response += "  'settings' : {\n";
     response += "    'atime' : ";
@@ -50,7 +50,7 @@ void handleSensorRead() {
     response += "}\n";
     server.send(200, "application/json", response);
   } else {
-    server.send(400, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[4-150]");
+    server.send(400, "text/plain", "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&ledma=[0, 4-150]");
   }
 
   digitalWrite(led, 0);
