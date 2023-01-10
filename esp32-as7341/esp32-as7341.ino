@@ -12,7 +12,7 @@ Adafruit_AS7341 as7341;
 
 const int led = 2;
 const char* mdns_name = "esp32-as7341";
-const char* usage = "Read AS7341 via endpopint /as7341/?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&led_ma=[0, even numbers 4-150]&[optional]led_stay_on=[0,1]\n";
+const char* usage = "Read AS7341 via endpopint /as7341?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&[optional]led_ma=[0, even numbers 4-150]&[optional]led_stay_on=[0,1]\n";
 
 void handleRoot() {
   digitalWrite(led, 1);
@@ -23,8 +23,8 @@ void handleRoot() {
 void handleSensorRead() {
   int32_t atime=-1;
   int32_t astep=-1;
-  int32_t led_ma=-1;
   int32_t gain=-1;
+  int32_t led_ma=0;
   int32_t led_stay_on=0;
 
   digitalWrite(led, 1);
