@@ -30,12 +30,6 @@ void handleBasicScript() {
   digitalWrite(led, 0);
 }
 
-void handleRoot() {
-  digitalWrite(led, 1);
-  server.send(200, "text/plain", usage);
-  digitalWrite(led, 0);
-}
-
 void handleSensorRead() {
   int32_t atime=-1;
   int32_t astep=-1;
@@ -226,8 +220,10 @@ void setup(void) {
   }
 
   // Register routes then start HTTP server
-  server.on("/", handleRoot);
   server.on("/as7341", handleSensorRead);
+  server.on("/", handleBasicIndex);
+  server.on("/index.html", handleBasicIndex);
+  server.on("/script.js", handleBasicScript);
   server.on("/basic/index.html", handleBasicIndex);
   server.on("/basic/script.js", handleBasicScript);
   server.onNotFound(handleNotFound);
