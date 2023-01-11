@@ -141,6 +141,7 @@ void handleSensorRead() {
       response += "\n";
       response += "  }\n";
       response += "}\n";
+      server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(200, "application/json", response);
     } else {
       server.send(500, "text/plain", "Failed readAllChannels()");
