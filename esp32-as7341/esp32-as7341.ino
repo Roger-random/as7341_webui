@@ -6,6 +6,10 @@
 
 #include <Adafruit_AS7341.h>
 
+// Basic brower UI
+#include "basic.index.html.h"
+#include "basic.script.js.h"
+
 WebServer server(80);
 
 Adafruit_AS7341 as7341;
@@ -13,6 +17,18 @@ Adafruit_AS7341 as7341;
 const int led = 2;
 const char* mdns_name = "esp32-as7341";
 const char* usage = "Read AS7341 via endpopint /as7341?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&[optional]led_ma=[0, even numbers 4-150]&[optional]led_stay_on=[0,1]\n";
+
+void handleBasicIndex() {
+  digitalWrite(led, 1);
+  server.send(200, "text/html", basic_index_html);
+  digitalWrite(led, 0);
+}
+
+void handleBasicScript() {
+  digitalWrite(led, 1);
+  server.send(200, "text/javascript", basic_script_js);
+  digitalWrite(led, 0);
+}
 
 void handleRoot() {
   digitalWrite(led, 1);
@@ -141,7 +157,7 @@ void handleSensorRead() {
       response += "\n";
       response += "  }\n";
       response += "}\n";
-      server.sendHeader("Access-Control-Allow-Origin", "*");
+      // Uncomment for development: server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(200, "application/json", response);
     } else {
       server.send(500, "text/plain", "Failed readAllChannels()");
@@ -212,6 +228,8 @@ void setup(void) {
   // Register routes then start HTTP server
   server.on("/", handleRoot);
   server.on("/as7341", handleSensorRead);
+  server.on("/basic/index.html", handleBasicIndex);
+  server.on("/basic/script.js", handleBasicScript);
   server.onNotFound(handleNotFound);
 
   server.begin();
