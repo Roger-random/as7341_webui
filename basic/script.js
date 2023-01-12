@@ -44,15 +44,15 @@ function recalculate_parameters() {
 
   // Integration time formula from datasheet 10.2.2
   var exposure_time = Math.round(((1+value_atime)*(1+value_astep)*2.78)/1000);
-  output_exposure.textContent = `Exposure time of ${exposure_time}ms from atime=${value_atime} and astep=${value_astep}`;
+  output_exposure.textContent = "Exposure time of ".concat(exposure_time, "ms from atime=").concat(value_atime, " and astep=").concat(value_astep);
 
-  output_gain.textContent = `Sensor gain of ${Math.pow(2,value_gain)}X`;
+  output_gain.textContent = "Sensor gain of ".concat(Math.pow(2, value_gain), "X");
 
   // Minimum power is 4mA, lower values treated as 0
   if (value_led < 4) {
     value_led = 0;
   }
-  output_led.textContent = `LED current of ${value_led}mA`;
+  output_led.textContent = "LED current of ".concat(value_led, "mA");
 }
 
 function initiate_read() {
@@ -63,8 +63,8 @@ function initiate_read() {
   as7341.searchParams.set('led_ma', value_led);
 
   fetch(as7341)
-    .then((response) => response.text())
-    .then((data) => raw_json.textContent = data);
+    .then(function (response) { return response.text(); })
+    .then(function (data) { return raw_json.textContent = data; });
 }
 
 //////////////////////////////////////////////////////////////////////////
