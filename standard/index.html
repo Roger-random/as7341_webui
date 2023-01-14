@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>AS7341 HTML</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./style.css">
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <h1>AS7341 Interactive Browser UI</h1>
+    <section class="parameters">
+      <h2>Manual Control</h2>
+      <div id="param_exposure">
+        <input type="range" id="atime" name="atime" min="0" max="255" value="19">
+        <label for="atime" id="label_exposure"></label>
+      </div>
+      <div id="param_gain">
+        <input type="range" id="gain_power" name="gain_power" min="0" max="9" value="8">
+        <label for="gain_power" id="label_gain"></label>
+      </div>
+      <div id="param_led">
+        <input type="range" id="led_current" name="led_current" min="0" max="150" value="0" step="2">
+        <label for="led_current" id="label_led"></label>
+      </div>
+    </section>
+    <section class="controls">
+      <button id="go_button" type="button">Read Spectral Color</button>
+    </section>
+    <section class="results">
+      <pre id="raw_json">
+      </pre>
+    </section>
+  </body>
+</html>
