@@ -61,6 +61,7 @@ void handleSensorRead() {
       (led_ma == 0 || (led_ma >= 4 && led_ma <= 150 && (0 == led_ma%2))) &&
       (led_stay_on == 0 || led_stay_on == 1)) {
     uint16_t readings[12];
+    unsigned long read_time;
 
     if (led_ma > 0) {
       as7341.enableLED(true);
@@ -104,7 +105,10 @@ void handleSensorRead() {
         break;
     }
 
+    read_time = millis();
     if (as7341.readAllChannels(readings)){
+      read_time = millis() - read_time;
+
       String response = "{\n";
       response += "  \"415nm\" : ";
       response += readings[AS7341_CHANNEL_415nm_F1];
@@ -148,6 +152,9 @@ void handleSensorRead() {
       response += ",\n";
       response += "    \"led_ma\" : ";
       response += led_ma;
+      response += ",\n";
+      response += "    \"read_time\" : ";
+      response += read_time;
       response += "\n";
       response += "  }\n";
       response += "}\n";
