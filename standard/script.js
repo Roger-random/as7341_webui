@@ -8,7 +8,7 @@ const value_astep = 3596; // (3596+1)*2.78us = 9.99966ms close enough to 10ms
 var value_gain;
 var value_led;
 
-var label_exposure;
+var label_sensor_read;
 var label_gain;
 var label_led;
 
@@ -27,7 +27,7 @@ function contentLoaded() {
 
   document.getElementById('go_button').addEventListener('click',initiate_read);
 
-  label_exposure = document.getElementById('label_exposure');
+  label_sensor_read = document.getElementById('label_sensor_read');
   label_gain = document.getElementById('label_gain');
   label_led = document.getElementById('label_led');
 
@@ -42,8 +42,9 @@ function recalculate_parameters() {
   value_led   = Number(input_led.value);
 
   // Integration time formula from datasheet 10.2.2
-  var exposure_time = Math.round(((1+value_atime)*(1+value_astep)*2.78)/1000);
-  label_exposure.textContent = "Exposure time: ".concat(exposure_time, "ms");
+  var integration_time = Math.round(((1+value_atime)*(1+value_astep)*2.78)/1000);
+  // Display integration_time*2 because readAllChannels() reads F1-F4, then reads again for F5-F8
+  label_sensor_read.textContent = "Time to read all sensors: ".concat(integration_time*2, "ms");
 
   label_gain.textContent = "Sensor gain: ".concat(Math.pow(2, value_gain), "X");
 
