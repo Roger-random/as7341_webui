@@ -63,8 +63,16 @@ function initiate_read() {
   as7341.searchParams.set('led_ma', value_led);
 
   fetch(as7341)
-    .then(function (response) { return response.text(); })
-    .then(function (data) { return raw_json.textContent = data; });
+    .then(function (response) { return response.json(); }, report_sensor_error)
+    .then(process_sensor_data, report_sensor_error);
+}
+
+function process_sensor_data(sensor_data) {
+  raw_json.textContent = JSON.stringify(sensor_data, null, 2);
+}
+
+function report_sensor_error(sensor_error) {
+  raw_json.textContent = JSON.stringify(sensor_error, null, 2);
 }
 
 //////////////////////////////////////////////////////////////////////////
