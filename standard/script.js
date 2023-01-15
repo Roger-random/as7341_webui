@@ -2,6 +2,8 @@ var input_atime;
 var input_astep;
 var input_gain;
 var input_led;
+var input_go_button;
+var input_repeat_read;
 
 var value_atime;
 const value_astep = 3596; // (3596+1)*2.78us = 9.99966ms close enough to 10ms
@@ -24,8 +26,9 @@ function contentLoaded() {
   input_led = document.getElementById('led_current');
   input_led.addEventListener('change', recalculate_parameters);
   input_led.addEventListener('input', recalculate_parameters);
-
-  document.getElementById('go_button').addEventListener('click',initiate_read);
+  input_go_button = document.getElementById('go_button');
+  input_go_button.addEventListener('click',initiate_read);
+  input_repeat_read = document.getElementById('repeat_read');
 
   label_sensor_read = document.getElementById('label_sensor_read');
   label_gain = document.getElementById('label_gain');
@@ -56,11 +59,16 @@ function recalculate_parameters() {
 }
 
 function initiate_read() {
+  input_go_button.disabled = true;
   var as7341 = new URL('http://esp32-as7341.local/as7341');
   as7341.searchParams.set('atime', value_atime);
   as7341.searchParams.set('astep', value_astep);
   as7341.searchParams.set('gain', value_gain);
   as7341.searchParams.set('led_ma', value_led);
+
+  if(input_repeat_read.checked) {
+    as7341.searchParams.set('led_stay_on', 1);
+  }
 
   fetch(as7341)
     .then(function (response) { return response.json(); }, report_sensor_error)
@@ -73,6 +81,16 @@ function display_raw_json(input_object) {
 
 function process_sensor_data(sensor_data) {
   display_raw_json(sensor_data);
+  if(input_repeat_read.checked) {
+    setTimeout(initiate_read);
+  } else {
+    // Turn off LED.
+    var as7341 = new URL('http://esp32-as7341.local/as7341');
+    as7341.searchParams.set('led_ma', 0);
+    fetch(as7341); // Ignore response, we just wanted LED off.
+
+    input_go_button.disabled = false;
+  }
 }
 
 function report_sensor_error(sensor_error) {

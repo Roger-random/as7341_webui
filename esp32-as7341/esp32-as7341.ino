@@ -37,6 +37,8 @@ void handleSensorRead() {
   int32_t led_ma=0;
   int32_t led_stay_on=0;
 
+  bool led_ma_present=false;
+
   digitalWrite(led, 1);
   for (uint8_t i = 0; i < server.args(); i++) {
     if (0==server.argName(i).compareTo("atime")) {
@@ -50,6 +52,7 @@ void handleSensorRead() {
     }
     if (0==server.argName(i).compareTo("led_ma")) {
       led_ma = server.arg(i).toInt();
+      led_ma_present = true;
     }
     if (0==server.argName(i).compareTo("led_stay_on")) {
       led_stay_on = server.arg(i).toInt();
@@ -158,16 +161,29 @@ void handleSensorRead() {
       response += "\n";
       response += "  }\n";
       response += "}\n";
-      // Uncomment for development: server.sendHeader("Access-Control-Allow-Origin", "*");
+      server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(200, "application/json", response);
     } else {
+      // Turn off LED in case of error
+      as7341.enableLED(false);
       server.send(500, "text/plain", "Failed readAllChannels()");
     }
 
     if(!led_stay_on) {
       as7341.enableLED(false);
     }
+  } else if (led_ma_present) {
+    if (led_ma > 0) {
+      as7341.enableLED(true);
+      as7341.setLEDCurrent(led_ma);
+    } else {
+      as7341.enableLED(false);
+    }
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(200, "application/json", "{}");
   } else {
+    // Turn off LED in case of error
+    as7341.enableLED(false);
     server.send(400, "text/plain", usage);
   }
 
