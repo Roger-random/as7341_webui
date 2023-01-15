@@ -67,12 +67,16 @@ function initiate_read() {
     .then(process_sensor_data, report_sensor_error);
 }
 
+function display_raw_json(input_object) {
+  raw_json.textContent = JSON.stringify(input_object, null, 2);
+}
+
 function process_sensor_data(sensor_data) {
-  raw_json.textContent = JSON.stringify(sensor_data, null, 2);
+  display_raw_json(sensor_data);
 }
 
 function report_sensor_error(sensor_error) {
-  raw_json.textContent = JSON.stringify(sensor_error, null, 2);
+  display_raw_json(sensor_error);
 }
 
 //////////////////////////////////////////////////////////////////////////
