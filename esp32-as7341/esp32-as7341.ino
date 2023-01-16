@@ -16,7 +16,11 @@ Adafruit_AS7341 as7341;
 
 const int led = 2;
 const char* mdns_name = "esp32-as7341";
-const char* usage = "Read AS7341 via endpopint /as7341?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&[optional]led_ma=[0, even numbers 4-150]&[optional]led_stay_on=[0,1]\n";
+const char* usage = "AS7341 sensor HTTP GET endpoint\nRead spectral channels (optional LED setting): /as7341?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&[optional]led_ma=[0, even numbers 4-150]\nChange LED illumination: /as7341?led_ma=[0,even numbers 4-150]\n";
+
+// Usually "false" so /as7341 endpoint is only accessible from pages we serve.
+// Can set to "true" to allow access from HTML UI from development machine.
+const bool allow_all_origin = true;
 
 void handleBasicIndex() {
   digitalWrite(led, 1);
@@ -30,48 +34,60 @@ void handleBasicScript() {
   digitalWrite(led, 0);
 }
 
+void handleCORS() {
+  if(allow_all_origin) {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+  }
+}
+
+bool update_led(int32_t led_ma) {
+  if (led_ma >= 4 && led_ma <= 150 && (0 == led_ma%2)) {
+    as7341.enableLED(true);
+    as7341.setLEDCurrent(led_ma);
+    return true;
+  } else if (led_ma == 0){
+    as7341.enableLED(false);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void handleSensorRead() {
   int32_t atime=-1;
   int32_t astep=-1;
   int32_t gain=-1;
   int32_t led_ma=0;
-  int32_t led_stay_on=0;
 
-  bool led_ma_present=false;
+  bool just_led_ma = true;
 
   digitalWrite(led, 1);
   for (uint8_t i = 0; i < server.args(); i++) {
     if (0==server.argName(i).compareTo("atime")) {
       atime = server.arg(i).toInt();
-    }
-    if (0==server.argName(i).compareTo("astep")) {
+      just_led_ma = false;
+    } else if (0==server.argName(i).compareTo("astep")) {
       astep = server.arg(i).toInt();
-    }
-    if (0==server.argName(i).compareTo("gain")) {
+      just_led_ma = false;
+    } else if (0==server.argName(i).compareTo("gain")) {
       gain = server.arg(i).toInt();
-    }
-    if (0==server.argName(i).compareTo("led_ma")) {
+      just_led_ma = false;
+    } else if (0==server.argName(i).compareTo("led_ma")) {
       led_ma = server.arg(i).toInt();
-      led_ma_present = true;
-    }
-    if (0==server.argName(i).compareTo("led_stay_on")) {
-      led_stay_on = server.arg(i).toInt();
+    } else {
+      Serial.print("Ignoring unknown argument ");
+      Serial.print(server.argName(i));
+      Serial.print(" value ");
+      Serial.println(server.arg(i));
+      just_led_ma = false;
     }
   }
   if ((atime >= 0 && atime <= 255) &&
       (astep >= 0 && astep <= 65534) &&
       (gain  >= 0 && gain  <= 9) &&
-      (led_ma == 0 || (led_ma >= 4 && led_ma <= 150 && (0 == led_ma%2))) &&
-      (led_stay_on == 0 || led_stay_on == 1)) {
+      update_led(led_ma)) {
     uint16_t readings[12];
     unsigned long read_time;
-
-    if (led_ma > 0) {
-      as7341.enableLED(true);
-      as7341.setLEDCurrent(led_ma);
-    } else {
-      as7341.enableLED(false);
-    }
 
     as7341.setATIME(atime);
     as7341.setASTEP(astep);
@@ -161,28 +177,27 @@ void handleSensorRead() {
       response += "\n";
       response += "  }\n";
       response += "}\n";
-      server.sendHeader("Access-Control-Allow-Origin", "*");
+      handleCORS();
       server.send(200, "application/json", response);
     } else {
       // Turn off LED in case of error
       as7341.enableLED(false);
       server.send(500, "text/plain", "Failed readAllChannels()");
     }
+  } else if (just_led_ma && update_led(led_ma)) {
+    // It is also valid to have just led_ma parameter.
+    String response = "{\n";
+    response += "  \"settings\" : {\n";
+    response += "    \"led_ma\" : ";
+    response += led_ma;
+    response += "\n";
+    response += "  }\n";
+    response += "}\n";
 
-    if(!led_stay_on) {
-      as7341.enableLED(false);
-    }
-  } else if (led_ma_present) {
-    if (led_ma > 0) {
-      as7341.enableLED(true);
-      as7341.setLEDCurrent(led_ma);
-    } else {
-      as7341.enableLED(false);
-    }
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, "application/json", "{}");
+    handleCORS();
+    server.send(200, "application/json", response);
   } else {
-    // Turn off LED in case of error
+    // LED always gets turned off in case of unhandled error
     as7341.enableLED(false);
     server.send(400, "text/plain", usage);
   }
