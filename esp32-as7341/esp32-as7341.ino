@@ -10,6 +10,11 @@
 #include "basic.index.html.h"
 #include "basic.script.js.h"
 
+// Standard browser UI
+#include "standard.index.html.h"
+#include "standard.style.css.h"
+#include "standard.script.js.h"
+
 WebServer server(80);
 
 Adafruit_AS7341 as7341;
@@ -31,6 +36,24 @@ void handleBasicIndex() {
 void handleBasicScript() {
   digitalWrite(led, 1);
   server.send(200, "text/javascript", basic_script_js);
+  digitalWrite(led, 0);
+}
+
+void handleStandardIndex() {
+  digitalWrite(led, 1);
+  server.send(200, "text/html", standard_index_html);
+  digitalWrite(led, 0);
+}
+
+void handleStandardScript() {
+  digitalWrite(led, 1);
+  server.send(200, "text/javascript", standard_script_js);
+  digitalWrite(led, 0);
+}
+
+void handleStandardStyle() {
+  digitalWrite(led, 1);
+  server.send(200, "text/css", standard_style_css);
   digitalWrite(led, 0);
 }
 
@@ -259,9 +282,10 @@ void setup(void) {
 
   // Register routes then start HTTP server
   server.on("/as7341", handleSensorRead);
-  server.on("/", handleBasicIndex);
-  server.on("/index.html", handleBasicIndex);
-  server.on("/script.js", handleBasicScript);
+  server.on("/", handleStandardIndex);
+  server.on("/index.html", handleStandardIndex);
+  server.on("/script.js", handleStandardScript);
+  server.on("/style.css", handleStandardStyle);
   server.on("/basic/index.html", handleBasicIndex);
   server.on("/basic/script.js", handleBasicScript);
   server.onNotFound(handleNotFound);
