@@ -141,10 +141,6 @@ function initiate_read() {
   as7341.searchParams.set('gain', value_gain);
   as7341.searchParams.set('led_ma', value_led);
 
-  if(input_repeat_read.checked) {
-    as7341.searchParams.set('led_stay_on', 1);
-  }
-
   fetch(as7341)
     .then(function (response) { return response.json(); }, report_sensor_error)
     .then(process_sensor_data, report_sensor_error);
