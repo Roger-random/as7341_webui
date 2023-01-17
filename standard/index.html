@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./style.css">
     <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <h1>AS7341 Interactive Browser UI</h1>
@@ -28,6 +29,11 @@
       <button id="go_button" type="button">Read Spectral Color</button>
       <input type="checkbox" id="repeat_read" name="repeat_read">
       <label for="repeat_read" id="label_repeat_read">Repeat</label>
+    </section>
+    <section class="charts">
+      <div>
+        <canvas id="spectral_chart"></canvas>
+      </div>
     </section>
     <section class="results">
       <pre id="raw_json">
