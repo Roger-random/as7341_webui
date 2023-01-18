@@ -2,43 +2,53 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>AS7341 HTML</title>
+    <title>AS7341 Sensor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./style.css">
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <h1>AS7341 Interactive Browser UI</h1>
+    <h2>AS7341 Spectral Color Sensor</h2>
     <section class="parameters">
-      <h2>Manual Control</h2>
+      <div id="calculated_params">
+        <h3 id="calculated_time">Time: 400ms</h3>
+        <h3 id="calculated_gain">Gain: 256X</h3>
+        <h3 id="calculated_current">Current: 0ma</h3>
+      </div>
       <div id="param_sensor_read">
+        <label for="atime" id="label_sensor_read">Read Cycle Duration (milliseconds)</label>
         <input type="range" id="atime" name="atime" min="0" max="255" value="19">
-        <label for="atime" id="label_sensor_read"></label>
       </div>
       <div id="param_gain">
-        <input type="range" id="gain_power" name="gain_power" min="0" max="9" value="8">
-        <label for="gain_power" id="label_gain"></label>
+        <label for="gain_power" id="label_gain">Sensor Sensitivity (multiplier)</label>
+        <input type="range" id="gain_power" name="gain_power" min="0" max="9" value="8"/>
       </div>
       <div id="param_led">
+        <label for="led_current" id="label_led">Illumination LED Current (milliamps)</label>
         <input type="range" id="led_current" name="led_current" min="0" max="150" value="0" step="2">
-        <label for="led_current" id="label_led"></label>
       </div>
     </section>
     <section class="controls">
-      <input type="checkbox" id="repeat_read" name="repeat_read" checked="true">
-      <label for="repeat_read" id="label_repeat_read">Repeat</label>
-      <button id="go_button" type="button">Read Spectral Color</button>
-      <button id="current_reference_button" type="button">Current</button>
-      <button id="direct_data_button" type="button">Direct</button>
-      <button id="sunlight_reference_button" type="button">Sunlight</button>
+      <div id="controls_read">
+        <button id="go_button" type="button">Start Read</button>
+        <label for="repeat_read" id="label_repeat_read">Repeat</label>
+        <input type="checkbox" id="repeat_read" name="repeat_read" checked="true">
+      </div>
+      <div id="controls_normalize">
+        <label>Spectrum Normalization To:</label>
+        <button id="current_reference_button" type="button">Current</button>
+        <button id="direct_data_button" type="button">Direct</button>
+        <button id="sunlight_reference_button" type="button">Sunlight</button>
+      </div>
     </section>
     <section class="charts">
-      <div>
+      <div id="spectral_chart_container">
         <canvas id="spectral_chart"></canvas>
       </div>
     </section>
     <section class="results">
+      <h3>Full Response</h3>
       <pre id="raw_json">
       </pre>
     </section>

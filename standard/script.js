@@ -115,9 +115,9 @@ function contentLoaded() {
   document.getElementById('sunlight_reference_button').addEventListener('click',reset_normalization_curve);
   document.getElementById('direct_data_button').addEventListener('click',direct_data_curve);
 
-  label_sensor_read = document.getElementById('label_sensor_read');
-  label_gain = document.getElementById('label_gain');
-  label_led = document.getElementById('label_led');
+  label_sensor_read = document.getElementById('calculated_time');
+  label_gain = document.getElementById('calculated_gain');
+  label_led = document.getElementById('calculated_current');
 
   raw_json = document.getElementById('raw_json');
 
@@ -132,8 +132,6 @@ function contentLoaded() {
         labels: spectral_labels,
         datasets: [{
           data: [0,0,0,0,0,0,0,0,0],
-          borderColor: "#FFFFFF",
-          borderWidth: 3,
           backgroundColor: spectral_colors
         }]
       },
@@ -163,15 +161,15 @@ function recalculate_parameters() {
   // Integration time formula from datasheet 10.2.2
   var integration_time = Math.round(((1+value_atime)*(1+value_astep)*2.78)/1000);
   // Display integration_time*2 because readAllChannels() reads F1-F4, then reads again for F5-F8
-  label_sensor_read.textContent = "Time to read all sensors: ".concat(integration_time*2, "ms");
+  label_sensor_read.textContent = `Time: ${integration_time*2 + 50}ms`;
 
-  label_gain.textContent = "Sensor gain: ".concat(Math.pow(2, value_gain), "X");
+  label_gain.textContent = `Gain: ${Math.pow(2, value_gain)}X`;
 
   // Minimum power is 4mA, lower values treated as 0
   if (value_led < 4) {
     value_led = 0;
   }
-  label_led.textContent = "LED current: ".concat(value_led, "mA");
+  label_led.textContent = `Current: ${value_led}mA`;
 }
 
 function initiate_read() {
@@ -192,21 +190,29 @@ function display_raw_json(input_object) {
 }
 
 function process_sensor_data(sensor_data) {
-  var spectral_data = spectral_labels.map(x=>sensor_data[x]);
+  try {
+    var spectral_data = spectral_labels.map(x=>sensor_data[x]);
 
-  if (recalculate_normalization_on_next_read) {
-    recalculate_normalization_curve(spectral_data);
-    recalculate_normalization_on_next_read = false;
+    if (recalculate_normalization_on_next_read) {
+      recalculate_normalization_curve(spectral_data);
+      recalculate_normalization_on_next_read = false;
+    }
+
+    var normalized_data = [];
+    spectral_data.forEach((x, index)=>(normalized_data.push(x*normalization_curve[index])));
+
+    var spectral_max = Math.max(...normalized_data);
+    spectral_chart.data.datasets[0].data = normalized_data.map(x=>x/spectral_max);
+    spectral_chart.options.scales.y.max = 1.2;
+    spectral_chart.update();
+    display_raw_json(sensor_data);
+  } catch(error) {
+    display_raw_json(JSON.stringify(error));
+
+    // In case of error, stop repeating
+    input_repeat_read.checked = false;
   }
 
-  var normalized_data = [];
-  spectral_data.forEach((x, index)=>(normalized_data.push(x*normalization_curve[index])));
-
-  var spectral_max = Math.max(...normalized_data);
-  spectral_chart.data.datasets[0].data = normalized_data.map(x=>x/spectral_max);
-  spectral_chart.options.scales.y.max = 1.2;
-  spectral_chart.update();
-  display_raw_json(sensor_data);
   if(input_repeat_read.checked) {
     setTimeout(initiate_read);
   } else {

@@ -1,3 +1,71 @@
+* {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+pre {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+h2 {
+  color:#DDD;
+  background-color: black;
+  text-align: center;
+  margin: 0;
+  padding: 0.5em;
+}
+
 input {
   width: 100%;
+}
+
+section {
+  margin: 0;
+}
+
+.parameters {
+  background-color: #DDD;
+}
+
+.parameters div {
+  padding: 1em;
+}
+
+#calculated_params {
+  display: flex;
+  justify-content: space-between;
+}
+
+#calculated_params h3 {
+  margin: 0;
+  padding: 0;
+}
+
+.controls {
+  background-color: #EEE;
+  display: flex;
+  justify-content: space-between;
+  padding: 1em;
+  line-height: 2em;
+}
+
+div#controls_read {
+  text-align: start;
+}
+
+div#controls_normalize {
+  text-align: end;
+}
+
+#repeat_read {
+  width: auto;
+}
+
+.spectral_chart_container {
+  position: relative;
+  width: 95vw;
+}
+
+.results {
+  background-color:#EEE;
+  font-size: x-small;
 }
