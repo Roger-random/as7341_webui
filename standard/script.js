@@ -77,31 +77,26 @@ function recalculate_normalization_curve(new_reference) {
   normalization_curve = new_reference.map(x => reference_max/x);
 }
 
-function reset_normalization_curve() {
-  recalculate_normalization_curve(sunlight_reference);
-
+function initiate_read_if_not_repeating() {
   // If we're not in continuous mode, kick off a read.
   if(!input_repeat_read.checked) {
     setTimeout(initiate_read);
   }
+}
+
+function reset_normalization_curve() {
+  recalculate_normalization_curve(sunlight_reference);
+  initiate_read_if_not_repeating();
 }
 
 function new_normalization_curve() {
   recalculate_normalization_on_next_read = true;
-
-  // If we're not in continuous mode, kick off a read.
-  if(!input_repeat_read.checked) {
-    setTimeout(initiate_read);
-  }
+  initiate_read_if_not_repeating();
 }
 
 function direct_data_curve() {
   recalculate_normalization_curve([1,1,1,1,1,1,1,1]);
-
-  // If we're not in continuous mode, kick off a read.
-  if(!input_repeat_read.checked) {
-    setTimeout(initiate_read);
-  }
+  initiate_read_if_not_repeating();
 }
 
 // Putting information from https://academo.org/demos/wavelength-to-colour-relationship/
