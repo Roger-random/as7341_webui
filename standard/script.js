@@ -1,5 +1,4 @@
 var input_atime;
-var input_astep;
 var input_gain;
 var input_led;
 var input_go_button;
@@ -55,9 +54,6 @@ const sunlight_reference = [
 
 var normalization_curve;
 var recalculate_normalization_on_next_read = false;
-
-const clear_label = "clear";
-var clear_data = 0;
 
 const devtest = true;
 
