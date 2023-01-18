@@ -138,6 +138,8 @@ function contentLoaded() {
         events: [] // Disable interactions (No click/hover/etc.)
       }
     });
+
+  setTimeout(initiate_read);
 }
 
 function recalculate_parameters() {
