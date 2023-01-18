@@ -83,6 +83,11 @@ function recalculate_normalization_curve(new_reference) {
 
 function reset_normalization_curve() {
   recalculate_normalization_curve(sunlight_reference);
+
+  // If we're not in continuous mode, kick off a read.
+  if(!input_repeat_read.checked) {
+    setTimeout(initiate_read);
+  }
 }
 
 function new_normalization_curve() {
@@ -96,6 +101,11 @@ function new_normalization_curve() {
 
 function direct_data_curve() {
   recalculate_normalization_curve([1,1,1,1,1,1,1,1]);
+
+  // If we're not in continuous mode, kick off a read.
+  if(!input_repeat_read.checked) {
+    setTimeout(initiate_read);
+  }
 }
 
 function contentLoaded() {
