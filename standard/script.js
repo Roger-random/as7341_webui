@@ -122,8 +122,19 @@ function direct_data_curve() {
 //  680 FF0000  255 0   0
 //
 //  Sum of all channels: R=1093 G=1065 B=747
-//  We see blue is under-represented.
-//  Correction multiplier: R=1 G=1.02629108 B=1.463186078
+//  We see sensors heavy in blue are under-represented.
+//  Multiplying 415, 445, 480nm channels by hand-fudged numbers get them within 1%.
+//
+//  415   1.72  202.96  0       407.64
+//  445   1.6   0       64      408
+//  480   1.4   0       298.2   357
+//  515   1     31      255     0
+//  555   1     179     255     0
+//  590   1     255     223     0
+//  630   1     255     79      0
+//  680   1     255     0       0
+//              1177.96 1174.2  1172.64
+
 function estimate_hue(normalized_readings) {
   const spectral_rgb = [
     [118, 0,  237],
@@ -135,16 +146,14 @@ function estimate_hue(normalized_readings) {
     [255, 79,   0],
     [255, 0,    0]
   ]
-  const correction_rgb = [1.0, 1.02629108, 1.4631806078];
+  const correction_rgb = [1.72, 1.6, 1.4, 1, 1, 1, 1, 1];
   var working_rgb=[0,0,0];
 
   normalized_readings.forEach((reading, index1)=>{
     spectral_rgb[index1].forEach((color, index2)=>{
-      working_rgb[index2] += reading*spectral_rgb[index1][index2];
+      working_rgb[index2] += reading*spectral_rgb[index1][index2]*correction_rgb[index1];
     })
   })
-
-  working_rgb = working_rgb.map((x, index)=>x*correction_rgb[index]);
 
   var color_max = Math.max(...working_rgb);
   working_rgb = working_rgb.map(x=>Math.floor(x*255/color_max));
