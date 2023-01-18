@@ -15,6 +15,7 @@ var label_sensor_read;
 var label_gain;
 var label_led;
 
+var result_status;
 var raw_json;
 
 const spectral_labels = [
@@ -187,6 +188,7 @@ function contentLoaded() {
   label_led = document.getElementById('calculated_current');
 
   raw_json = document.getElementById('raw_json');
+  result_status = document.getElementById('result_status');
 
   recalculate_parameters();
   reset_normalization_curve();
@@ -280,8 +282,24 @@ function process_sensor_data(sensor_data) {
     spectral_chart.data.datasets[0].data = normalized_data;
     spectral_chart.options.scales.y.max = 1.2;
     spectral_chart.update();
+
+    var saturation_value = Math.min((value_atime+1)*(value_astep+1), 65535);
+    var saturation_detected = false;
+    for (var property in sensor_data) {
+      var value = Number(sensor_data[property]);
+      if (NaN != value && value >= saturation_value) {
+        saturation_detected = true;
+        break;
+      }
+    }
+    if (saturation_detected) {
+      result_status.textContent = "Sensor saturation (overexposure) detected";
+    } else {
+      result_status.textContent = "Sensor data OK";
+    }
     display_raw_json(sensor_data);
   } catch(error) {
+    result_status.textContent = "Exception was thrown";
     display_raw_json(JSON.stringify(error));
 
     // In case of error, stop repeating
