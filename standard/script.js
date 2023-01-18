@@ -4,7 +4,6 @@ var input_gain;
 var input_led;
 var input_go_button;
 var input_repeat_read;
-var input_reference_read;
 
 var spectral_chart;
 
@@ -55,6 +54,7 @@ const sunlight_reference = [
   15217];
 
 var normalization_curve;
+var recalculate_normalization_on_next_read = false;
 
 const clear_label = "clear";
 var clear_data = 0;
@@ -85,6 +85,19 @@ function reset_normalization_curve() {
   recalculate_normalization_curve(sunlight_reference);
 }
 
+function new_normalization_curve() {
+  recalculate_normalization_on_next_read = true;
+
+  // If we're not in continuous mode, kick off a read.
+  if(!input_repeat_read.checked) {
+    setTimeout(initiate_read);
+  }
+}
+
+function direct_data_curve() {
+  recalculate_normalization_curve([1,1,1,1,1,1,1,1]);
+}
+
 function contentLoaded() {
   input_atime = document.getElementById('atime');
   input_atime.addEventListener('change', recalculate_parameters);
@@ -95,12 +108,12 @@ function contentLoaded() {
   input_led = document.getElementById('led_current');
   input_led.addEventListener('change', recalculate_parameters);
   input_led.addEventListener('input', recalculate_parameters);
+  input_repeat_read = document.getElementById('repeat_read');
   input_go_button = document.getElementById('go_button');
   input_go_button.addEventListener('click',initiate_read);
-  input_repeat_read = document.getElementById('repeat_read');
-  input_reference_read = document.getElementById('reference_read');
-  input_reset_reference_button = document.getElementById('reset_reference_button');
-  input_reset_reference_button.addEventListener('click',reset_normalization_curve);
+  document.getElementById('current_reference_button').addEventListener('click',new_normalization_curve);
+  document.getElementById('sunlight_reference_button').addEventListener('click',reset_normalization_curve);
+  document.getElementById('direct_data_button').addEventListener('click',direct_data_curve);
 
   label_sensor_read = document.getElementById('label_sensor_read');
   label_gain = document.getElementById('label_gain');
@@ -181,9 +194,9 @@ function display_raw_json(input_object) {
 function process_sensor_data(sensor_data) {
   var spectral_data = spectral_labels.map(x=>sensor_data[x]);
 
-  if (input_reference_read.checked) {
+  if (recalculate_normalization_on_next_read) {
     recalculate_normalization_curve(spectral_data);
-    input_reference_read.checked = false;
+    recalculate_normalization_on_next_read = false;
   }
 
   var normalized_data = [];
