@@ -26,13 +26,11 @@ const spectral_labels = [
   "555nm",
   "590nm",
   "630nm",
-  "680nm",
-  "nir"];
+  "680nm"];
 
 // Conversion of F1-F8 wavelengths to RGB via
 // https://academo.org/demos/wavelength-to-colour-relationship/
 // https://www.johndcook.com/wavelength_to_RGB.html
-// NIR represented by an arbitrarily chosen dark red
 const spectral_colors = [
   "#7600ED",
   "#0028FF",
@@ -41,8 +39,7 @@ const spectral_colors = [
   "#B3FF00",
   "#FFDF00",
   "#FF4F00",
-  "#FF0000",
-  "#220000"];
+  "#FF0000"];
 
 const clear_label = "clear";
 var clear_data = 0;
@@ -152,9 +149,10 @@ function display_raw_json(input_object) {
 
 function process_sensor_data(sensor_data) {
   var spectral_data = spectral_labels.map(x=>sensor_data[x]);
-  var clear_level = Number(sensor_data[clear_label]);
+  var spectral_max = Math.max(...spectral_data);
   spectral_chart.data.datasets[0].data = spectral_data;
-  spectral_chart.options.scales.y.max = clear_level;
+  // To avoid rapid flickering, round up to the next thousand.
+  spectral_chart.options.scales.y.max = 1000*Math.ceil(spectral_max/1000);
   spectral_chart.update();
   display_raw_json(sensor_data);
   if(input_repeat_read.checked) {
