@@ -108,6 +108,63 @@ function direct_data_curve() {
   }
 }
 
+// Putting information from https://academo.org/demos/wavelength-to-colour-relationship/
+// into a spreadsheet:
+//
+//  nm	Hex	    R	  G	  B
+//  415 7600ED  118 0   237
+//  445	0028FF  0   40  255
+//  480 00D5FF  0   213 255
+//  515 1FFFFF  31  255 0
+//  555 B3FF00  179 255 0
+//  590 FFDF00  255 223 0
+//  630 FF4F00  255 79  0
+//  680 FF0000  255 0   0
+//
+//  Sum of all channels: R=1093 G=1065 B=747
+//  We see blue is under-represented.
+//  Correction multiplier: R=1 G=1.02629108 B=1.463186078
+function estimate_hue(normalized_readings) {
+  const spectral_rgb = [
+    [118, 0,  237],
+    [0,   40, 255],
+    [0,   213,255],
+    [31,  255,  0],
+    [179, 255,  0],
+    [255, 223,  0],
+    [255, 79,   0],
+    [255, 0,    0]
+  ]
+  const correction_rgb = [1.0, 1.02629108, 1.4631806078];
+  var working_rgb=[0,0,0];
+
+  normalized_readings.forEach((reading, index1)=>{
+    spectral_rgb[index1].forEach((color, index2)=>{
+      working_rgb[index2] += reading*spectral_rgb[index1][index2];
+    })
+  })
+
+  working_rgb = working_rgb.map((x, index)=>x*correction_rgb[index]);
+
+  var color_max = Math.max(...working_rgb);
+  working_rgb = working_rgb.map(x=>Math.floor(x*255/color_max));
+
+  return `rgb(${working_rgb[0]}, ${working_rgb[1]}, ${working_rgb[2]})`;
+}
+
+// Copy/pasted from https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
+const backgroundColorPlugin = {
+  id: 'customCanvasBackgroundColor',
+  beforeDraw: (chart, args, options) => {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color || '#ffffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+
 function contentLoaded() {
   input_atime = document.getElementById('atime');
   input_atime.addEventListener('change', recalculate_parameters);
@@ -142,7 +199,9 @@ function contentLoaded() {
         labels: spectral_labels,
         datasets: [{
           data: [0,0,0,0,0,0,0,0,0],
-          backgroundColor: spectral_colors
+          backgroundColor: spectral_colors,
+          borderColor: 'white',
+          borderWidth: 2,
         }]
       },
       options: {
@@ -152,12 +211,16 @@ function contentLoaded() {
           }
         },
         plugins: {
+          customCanvasBackgroundColor: {
+            color: 'white'
+          },
           legend: {
             display: false // Turn off legend
           }
         }, // Turn off legend
         events: [] // Disable interactions (No click/hover/etc.)
-      }
+      },
+      plugins: [backgroundColorPlugin]
     });
 
   setTimeout(initiate_read);
@@ -212,7 +275,9 @@ function process_sensor_data(sensor_data) {
     spectral_data.forEach((x, index)=>(normalized_data.push(x*normalization_curve[index])));
 
     var spectral_max = Math.max(...normalized_data);
-    spectral_chart.data.datasets[0].data = normalized_data.map(x=>x/spectral_max);
+    normalized_data = normalized_data.map(x=>x/spectral_max);
+    spectral_chart.options.plugins.customCanvasBackgroundColor.color = estimate_hue(normalized_data);
+    spectral_chart.data.datasets[0].data = normalized_data;
     spectral_chart.options.scales.y.max = 1.2;
     spectral_chart.update();
     display_raw_json(sensor_data);
