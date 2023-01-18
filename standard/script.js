@@ -4,6 +4,7 @@ var input_gain;
 var input_led;
 var input_go_button;
 var input_repeat_read;
+var input_reference_read;
 
 var spectral_chart;
 
@@ -41,6 +42,20 @@ const spectral_colors = [
   "#FF4F00",
   "#FF0000"];
 
+// Spectral curve obtained from sunlight, used as
+// default reference for normalization
+const sunlight_reference = [
+  5749,
+  6342,
+  9533,
+  10746,
+  11245,
+  12577,
+  12633,
+  15217];
+
+var normalization_curve;
+
 const clear_label = "clear";
 var clear_data = 0;
 
@@ -60,6 +75,16 @@ function getURLobject() {
   return new URL('/as7341',espURI);
 }
 
+function recalculate_normalization_curve(new_reference) {
+  var reference_max = Math.max(...new_reference);
+
+  normalization_curve = new_reference.map(x => reference_max/x);
+}
+
+function reset_normalization_curve() {
+  recalculate_normalization_curve(sunlight_reference);
+}
+
 function contentLoaded() {
   input_atime = document.getElementById('atime');
   input_atime.addEventListener('change', recalculate_parameters);
@@ -73,6 +98,9 @@ function contentLoaded() {
   input_go_button = document.getElementById('go_button');
   input_go_button.addEventListener('click',initiate_read);
   input_repeat_read = document.getElementById('repeat_read');
+  input_reference_read = document.getElementById('reference_read');
+  input_reset_reference_button = document.getElementById('reset_reference_button');
+  input_reset_reference_button.addEventListener('click',reset_normalization_curve);
 
   label_sensor_read = document.getElementById('label_sensor_read');
   label_gain = document.getElementById('label_gain');
@@ -81,6 +109,7 @@ function contentLoaded() {
   raw_json = document.getElementById('raw_json');
 
   recalculate_parameters();
+  reset_normalization_curve();
 
   spectral_chart = new Chart(
     document.getElementById('spectral_chart'),
@@ -149,10 +178,18 @@ function display_raw_json(input_object) {
 
 function process_sensor_data(sensor_data) {
   var spectral_data = spectral_labels.map(x=>sensor_data[x]);
-  var spectral_max = Math.max(...spectral_data);
-  spectral_chart.data.datasets[0].data = spectral_data;
-  // To avoid rapid flickering, round up to the next thousand.
-  spectral_chart.options.scales.y.max = 1000*Math.ceil(spectral_max/1000);
+
+  if (input_reference_read.checked) {
+    recalculate_normalization_curve(spectral_data);
+    input_reference_read.checked = false;
+  }
+
+  var normalized_data = [];
+  spectral_data.forEach((x, index)=>(normalized_data.push(x*normalization_curve[index])));
+
+  var spectral_max = Math.max(...normalized_data);
+  spectral_chart.data.datasets[0].data = normalized_data.map(x=>x/spectral_max);
+  spectral_chart.options.scales.y.max = 1.2;
   spectral_chart.update();
   display_raw_json(sensor_data);
   if(input_repeat_read.checked) {
