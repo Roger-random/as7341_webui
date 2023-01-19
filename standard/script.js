@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// HTML element references cached from calling document.getElementById()
 var input_atime;
 var input_gain;
 var input_led;
@@ -28,11 +29,6 @@ var input_repeat_read;
 
 var spectral_chart;
 
-var value_atime;
-const value_astep = 3596; // (3596+1)*2.78us = 9.99966ms close enough to 10ms
-var value_gain;
-var value_led;
-
 var label_sensor_read;
 var label_gain;
 var label_led;
@@ -40,6 +36,13 @@ var label_led;
 var result_status;
 var raw_json;
 
+// Values of parameter input controls. Updated upon every input/change event
+var value_atime;
+const value_astep = 3596; // (3596+1)*2.78us = 9.99966ms close enough to 10ms
+var value_gain;
+var value_led;
+
+// Needs to match strings used by server-side code to label each sensor value.
 const spectral_labels = [
   "415nm",
   "445nm",
@@ -75,11 +78,15 @@ const sunlight_reference = [
   12633,
   15217];
 
+// Not all sensors respond the same way, this eight-element array represents a
+// compensation multiplier for each of eight spectral sensors. Usually
+// calculated by pointing the sensor at something to be treated as white color
 var normalization_curve;
 var recalculate_normalization_on_next_read = false;
 
+// URL reference to obtain AS7341 data depends on whether HTML/CSS/JS is served
+// from development/testing desktop or from ESP32.
 const devtest = true;
-
 function getURLobject() {
   var espURI;
 
@@ -94,12 +101,18 @@ function getURLobject() {
   return new URL('/as7341',espURI);
 }
 
+// Using the newly given reference array, calculate for each of eight elements
+// a multiplier so they all result in the same value when shown this reference.
+// (Usually something to be treated as white color.)
 function recalculate_normalization_curve(new_reference) {
   var reference_max = Math.max(...new_reference);
 
   normalization_curve = new_reference.map(x => reference_max/x);
 }
 
+// Normalization functions don't apply until the next sensor read. If we're
+// currently in auto-repeat mode we just have to wait a bit. But if we're not
+// in auto-repeat mode, we need to initiate a read.
 function initiate_read_if_not_repeating() {
   // If we're not in continuous mode, kick off a read.
   if(!input_repeat_read.checked) {
@@ -107,16 +120,21 @@ function initiate_read_if_not_repeating() {
   }
 }
 
+// Reset normalization curve to a hard-coded reference that was obtained from
+// natural sunlight
 function reset_normalization_curve() {
   recalculate_normalization_curve(sunlight_reference);
   initiate_read_if_not_repeating();
 }
 
+// Reset normalization curve treating the next sensor read as new reference
 function new_normalization_curve() {
   recalculate_normalization_on_next_read = true;
   initiate_read_if_not_repeating();
 }
 
+// Reset normalization curve to nothing (multiply everything by one) to see
+// sensor data directly
 function direct_data_curve() {
   recalculate_normalization_curve([1,1,1,1,1,1,1,1]);
   initiate_read_if_not_repeating();
@@ -148,7 +166,12 @@ function direct_data_curve() {
 //  630   1     255     79      0
 //  680   1     255     0       0
 //              1177.96 1174.2  1172.64
-
+//
+// This is a very crude approximation of human-perceived color based on spectral data.
+// For more accurate rendering, we would need to dive into color science starting with
+// understanding CIE color space: https://en.wikipedia.org/wiki/CIE_1931_color_space
+//
+// Such rigorous treatment is out of scope for this quick-hack project.
 function estimate_hue(normalized_readings) {
   const spectral_rgb = [
     [118, 0,  237],
@@ -175,6 +198,7 @@ function estimate_hue(normalized_readings) {
   return `rgb(${working_rgb[0]}, ${working_rgb[1]}, ${working_rgb[2]})`;
 }
 
+// A custom chart pluging to allow us to change the chart's background color.
 // Copy/pasted from https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
 const backgroundColorPlugin = {
   id: 'customCanvasBackgroundColor',
@@ -188,7 +212,9 @@ const backgroundColorPlugin = {
   }
 };
 
+// Setup and configuration when we receive HTML document DOMContentLoaded event
 function contentLoaded() {
+  // Upon content load, get all our HTML element references and attach event listeners.
   input_atime = document.getElementById('atime');
   input_atime.addEventListener('change', recalculate_parameters);
   input_atime.addEventListener('input', recalculate_parameters);
@@ -212,9 +238,11 @@ function contentLoaded() {
   raw_json = document.getElementById('raw_json');
   result_status = document.getElementById('result_status');
 
+  // Reset and recalculate starting values for all calculation variables.
   recalculate_parameters();
   reset_normalization_curve();
 
+  // Create chart object.
   spectral_chart = new Chart(
     document.getElementById('spectral_chart'),
     {
@@ -231,7 +259,8 @@ function contentLoaded() {
       options: {
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            max: 1.2,
           }
         },
         plugins: {
@@ -247,9 +276,12 @@ function contentLoaded() {
       plugins: [backgroundColorPlugin]
     });
 
+  // Initiate our first read.
   setTimeout(initiate_read);
 }
 
+// Whenever any of the parameter input controls change, we recalculate all
+// sensor parameters.
 function recalculate_parameters() {
   value_atime = Number(input_atime.value);
   value_gain  = Number(input_gain.value);
@@ -257,7 +289,8 @@ function recalculate_parameters() {
 
   // Integration time formula from datasheet 10.2.2
   var integration_time = Math.round(((1+value_atime)*(1+value_astep)*2.78)/1000);
-  // Display integration_time*2 because readAllChannels() reads F1-F4, then reads again for F5-F8
+  // Display integration_time*2 because readAllChannels() reads F1-F4, then
+  // reads again for F5-F8, plus about 50ms of overhead
   label_sensor_read.textContent = `Time: ${integration_time*2 + 50}ms`;
 
   label_gain.textContent = `Gain: ${Math.pow(2, value_gain)}X`;
@@ -269,6 +302,7 @@ function recalculate_parameters() {
   label_led.textContent = `Current: ${value_led}mA`;
 }
 
+// Build an URL object for AS7341 HTTP GET endpoint and query from it
 function initiate_read() {
   input_go_button.disabled = true;
   var as7341 = getURLobject();
@@ -282,28 +316,35 @@ function initiate_read() {
     .then(process_sensor_data, report_sensor_error);
 }
 
+// Show given object in JSON string format at the bottom of page
 function display_raw_json(input_object) {
   raw_json.textContent = JSON.stringify(input_object, null, 2);
 }
 
+// When HTTP GET fetch of sensor data is complete, process the data returned.
 function process_sensor_data(sensor_data) {
   try {
     var spectral_data = spectral_labels.map(x=>sensor_data[x]);
 
     if (recalculate_normalization_on_next_read) {
+      // Use latest values as new normalization reference
       recalculate_normalization_curve(spectral_data);
       recalculate_normalization_on_next_read = false;
     }
 
+    // Normalize sensor values for plotting on chart
     var normalized_data = [];
     spectral_data.forEach((x, index)=>(normalized_data.push(x*normalization_curve[index])));
 
     var spectral_max = Math.max(...normalized_data);
     normalized_data = normalized_data.map(x=>x/spectral_max);
-    spectral_chart.options.plugins.customCanvasBackgroundColor.color = estimate_hue(normalized_data);
     spectral_chart.data.datasets[0].data = normalized_data;
-    spectral_chart.options.scales.y.max = 1.2;
 
+    // Change chart background to our best guess at the color.
+    spectral_chart.options.plugins.customCanvasBackgroundColor.color = estimate_hue(normalized_data);
+
+    // See if any sensor values are at maximum value represent saturation.
+    // Overexposure results are either skewed or outright nonsensical.
     var saturation_value = Math.min((value_atime+1)*(value_astep+1), 65535);
     var saturation_detected = false;
     for (var property in sensor_data) {
@@ -320,6 +361,8 @@ function process_sensor_data(sensor_data) {
       result_status.textContent = "Sensor data OK";
       spectral_chart.data.datasets[0].borderColor = 'white';
     }
+
+    // Display JSON returned by server at the bottom of page
     display_raw_json(sensor_data);
   } catch(error) {
     result_status.textContent = "Exception was thrown";
@@ -330,9 +373,11 @@ function process_sensor_data(sensor_data) {
     input_repeat_read.checked = false;
   }
 
+  // Redraw spectral chart with data from above
   spectral_chart.update();
 
   if(input_repeat_read.checked) {
+    // If we're on auto-repeat, kick off the next read.
     setTimeout(initiate_read);
   } else {
     // Turn off LED.
