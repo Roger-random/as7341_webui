@@ -281,7 +281,6 @@ function process_sensor_data(sensor_data) {
     spectral_chart.options.plugins.customCanvasBackgroundColor.color = estimate_hue(normalized_data);
     spectral_chart.data.datasets[0].data = normalized_data;
     spectral_chart.options.scales.y.max = 1.2;
-    spectral_chart.update();
 
     var saturation_value = Math.min((value_atime+1)*(value_astep+1), 65535);
     var saturation_detected = false;
@@ -294,17 +293,22 @@ function process_sensor_data(sensor_data) {
     }
     if (saturation_detected) {
       result_status.textContent = "Sensor saturation (overexposure) detected";
+      spectral_chart.data.datasets[0].borderColor = 'red';
     } else {
       result_status.textContent = "Sensor data OK";
+      spectral_chart.data.datasets[0].borderColor = 'white';
     }
     display_raw_json(sensor_data);
   } catch(error) {
     result_status.textContent = "Exception was thrown";
+    spectral_chart.data.datasets[0].borderColor = 'red';
     display_raw_json(JSON.stringify(error));
 
     // In case of error, stop repeating
     input_repeat_read.checked = false;
   }
+
+  spectral_chart.update();
 
   if(input_repeat_read.checked) {
     setTimeout(initiate_read);
