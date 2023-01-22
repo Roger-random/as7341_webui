@@ -1,17 +1,22 @@
-# Web UI to interactively play with AS7341 sensor
-This project aims to create a browser-based interface for
-interactively experimenting with an AS7341 spectral color
-sensor.
+# AS7341 Web UI
+This project implements a browser-based interface for interactively
+experimenting with an AS7341 spectral color sensor. An ESP32 communicates
+with the AS7341 via I2C and serves the interface to a browser via WiFi.
+
+---
 
 ## Hardware
 * ESP32 microcontroller. Developed on chip_id ESP32-D0WDQ6 (revision 1)
 of [ESP32 mini development board](https://amzn.to/3kx92rp)(*)
 * AS7341 sensor. Developed with [Adafruit #4698 breakout board](https://www.adafruit.com/product/4698)
-* Android smartphone or anything with up-to-date Chrome browser. Any modern
-browser should work, but I tested on Chrome.
+* Any device with modern browser. (I primarily use with Chrome browser on an
+Android phone.)
 
 Wiring use standard Arduino ESP32 assignments: GPIO22 is SCL, GPIO21 is SDA
-ESP32 activity LED on GPIO2 (can be changed in Arduino sketch.)
+
+ESP32 activity indicator LED on GPIO2 (can be changed in Arduino sketch.)
+
+---
 
 ## Instructions for use:
 
@@ -22,9 +27,12 @@ ESP32 activity LED on GPIO2 (can be changed in Arduino sketch.)
 5. Compile and upload to ESP32
 6. Open browser to 'http://esp32-as7341.local'. If mDNS address of
 'esp32-as7341.local' does not work, wait a few minutes and try again. (mDNS
-takes a bit of time to propagate.) If it still doesn't work, use the local IP
+needs a bit of time to propagate.) If it still doesn't work, use the local IP
 address. Open Arduino IDE Serial Monitor to watch for bootup message. Upon
 successful connection, it will show the network name and assigned IP address.
+
+WiFi must have general internet access in order to download a precompiled
+version of [Chart.js library](https://www.chartjs.org/) for the bar graph.
 
 By default, upon launch the app will immediately start reading the sensor
 continuously with default parameters.
@@ -78,7 +86,7 @@ Each bar of the chart is represented by a color most closely associated
 with its wavelength.
 
 Under normal operation, each bar has a white border. When any of the sensors
-reach saturation level (overexposure, including Clear and NIR channels)
+reach saturation level (a.k.a. overexposure) including Clear and NIR channels
 the white border turns red as warning that values are unreliable.
 
 Chart background color is an approximation of the color seen by the sensor.
@@ -89,8 +97,70 @@ the hard work and creates a pull request.) Want to tackle the challenge?
 
 ### Raw Sensor Data
 
-At the bottom of the page, we have raw sensor values as sent by ESP32.
-
+At the bottom of the page, raw sensor values as sent by ESP32 are listed.
 
 ---
+
+## Development/Testing Web UI Updates
+
+One advantage of using web-based technology is that we can edit a source file
+and press F5 to see updates much more quickly than recompiling and uploading
+code via Arduino IDE. (Which is a bit tricky for this project, more details in
+the next section.)
+
+Use any web server software to serve this repository. If Docker Compose is
+installed, you can run `docker compose up` to launch `nginx-alpine` to serve
+this repository on the local machine at port 18080.
+
+The `index.html` file at root has links to `basic` and `standard`. pages.
+`standard` is what is shown by default. `basic` is an earlier version of the UI
+with no stylesheet and no bar chart useful for diagnosis and debugging.
+
+Inside `standard/script.js` change `const devtest` from `false` to `true`. This
+points the URL fetch operation to `http://esp32-as7341.local`.
+
+If the browser reports blocking due to CORS policy, open the Arduino sketch and
+change `allow_all_origin` to `true`. Recompile and upload.
+
+---
+
+## Updating Web UI
+
+Once we're satisfied with web UI updates, we can upload them to Arduino.
+Because Arduino IDE doesn't really have the concept of uploading files to the
+microcontroller as-is, we have to package the web UI files into the ARduino
+sketch. I didn't want to deal with escaping quotes and what not, so instead of
+including them as text files, they were embedded as binary files. So updating
+the web UI means updating the binary hexadecimal representation in the Arduino
+sketch. The follow instructions use the command-line tool `xxd` but any tool
+converting files to hexadecimal bytes should work. (Be sure to have termination
+null character.)
+
+### Example: updating standard `script.js` with `xxd`
+
+1. Go into `esp32-as7341` subdirectory.
+2. Run `xxd -i ../standard/script.js standard.script.js.h` to convert
+`script.js` to a header file full of hexadecimal values.
+3. Open `standard.script.js.h` in a text editor.
+4. At the top of the file, change `unsigned char ___standard_script_js` to
+`const char standard_script_js`
+5. At the bottom of the file after the final byte (probably `0x0a`),
+append the null termination character `, 0x00`.
+6. Repeat as needed for `index.html` and `style.css`
+7. In Arduino IDE, recompile and upload to ESP32.
+
+Note: Before doing this, undo dev/test configuration changes. Verify that:
+1. `standard/script.js` has `const devtest` set to `false`.
+2. Arduino sketch has `allow_all_origin` set to `false`
+
+---
+
+## Project Log
+
+For more details on how this project came about, design decisions, and
+especially the dumb mistakes I made, see posts tagged "as7341"
+[on my project diary NewScrewdriver.com.](https://newscrewdriver.com/tag/as7341/)
+
+---
+
 (*) Disclosure: As an Amazon Associate I earn from qualifying purchases.
