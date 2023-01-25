@@ -45,7 +45,7 @@ Top three sliders are parameters:
 1. Read cycle duration is the estimated time taken per read. Because the sensor
 doesn't have enough ADC to read from all its sensors, we configure the sensor
 multiplexer (SMUX) to read some of the sensors then reconfigure to read the
-rest of sensors. This this estimated time is the sum of sensor integration time
+rest of sensors. This estimated time is the sum of sensor integration time
 (equivalent to shutter time in photography) once for each configuration,
 plus 50ms to account for other overhead.
 2. Sensor sensitivity is an amplification from sensor default values. Higher
@@ -128,7 +128,7 @@ change `allow_all_origin` to `true`. Recompile and upload.
 
 Once we're satisfied with web UI updates, we can upload them to Arduino.
 Because Arduino IDE doesn't really have the concept of uploading files to the
-microcontroller as-is, we have to package the web UI files into the ARduino
+microcontroller as-is, we have to package the web UI files into the Arduino
 sketch. I didn't want to deal with escaping quotes and what not, so instead of
 including them as text files, they were embedded as binary files. So updating
 the web UI means updating the binary hexadecimal representation in the Arduino
