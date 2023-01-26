@@ -108,27 +108,24 @@ void handleSensorRead() {
   int32_t gain=-1;
   int32_t led_ma=0;
 
-  bool just_led_ma = true;
+  bool led_ma_specified = false;
 
   digitalWrite(led, 1);
   for (uint8_t i = 0; i < server.args(); i++) {
     if (0==server.argName(i).compareTo("atime")) {
       atime = server.arg(i).toInt();
-      just_led_ma = false;
     } else if (0==server.argName(i).compareTo("astep")) {
       astep = server.arg(i).toInt();
-      just_led_ma = false;
     } else if (0==server.argName(i).compareTo("gain")) {
       gain = server.arg(i).toInt();
-      just_led_ma = false;
     } else if (0==server.argName(i).compareTo("led_ma")) {
       led_ma = server.arg(i).toInt();
+      led_ma_specified = true;
     } else {
       Serial.print("Ignoring unknown argument ");
       Serial.print(server.argName(i));
       Serial.print(" value ");
       Serial.println(server.arg(i));
-      just_led_ma = false;
     }
   }
   if ((atime >= 0 && atime <= 255) &&
@@ -233,7 +230,7 @@ void handleSensorRead() {
       as7341.enableLED(false);
       server.send(500, "text/plain", "Failed readAllChannels()");
     }
-  } else if (just_led_ma && update_led(led_ma)) {
+  } else if (server.args()==1 && led_ma_specified && update_led(led_ma)) {
     // It is also valid to have just led_ma parameter.
     String response = "{\n";
     response += "  \"settings\" : {\n";
