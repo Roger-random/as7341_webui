@@ -119,9 +119,6 @@ with no stylesheet and no bar chart useful for diagnosis and debugging.
 Inside `standard/script.js` change `const devtest` from `false` to `true`. This
 points the URL fetch operation to `http://esp32-as7341.local`.
 
-If the browser reports blocking due to CORS policy, open the Arduino sketch and
-change `allow_all_origin` to `true`. Recompile and upload.
-
 ---
 
 ## Updating Web UI
@@ -149,9 +146,8 @@ append the null termination character `, 0x00`.
 6. Repeat as needed for `index.html` and `style.css`
 7. In Arduino IDE, recompile and upload to ESP32.
 
-Note: Before doing this, undo dev/test configuration changes. Verify that:
-1. `standard/script.js` has `const devtest` set to `false`.
-2. Arduino sketch has `allow_all_origin` set to `false`
+Note: Before doing this, undo dev/test configuration changes:
+Verify that `standard/script.js` has `const devtest` set to `false`.
 
 ---
 

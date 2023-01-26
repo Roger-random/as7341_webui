@@ -49,10 +49,6 @@ const int led = 2;
 const char* mdns_name = "esp32-as7341";
 const char* usage = "AS7341 sensor HTTP GET endpoint\nRead spectral channels (optional LED setting): /as7341?atime=[0 through 255 inclusive]&astep=[0-65534]&gain=[0-9 as powers of 2]&[optional]led_ma=[0, even numbers 4-150]\nChange LED illumination: /as7341?led_ma=[0,even numbers 4-150]\n";
 
-// Usually "false" so /as7341 endpoint is only accessible from pages we serve.
-// Can set to "true" to allow access from HTML UI from development machine.
-const bool allow_all_origin = false;
-
 void handleBasicIndex() {
   digitalWrite(led, 1);
   server.send(200, "text/html", basic_index_html);
@@ -83,10 +79,14 @@ void handleStandardStyle() {
   digitalWrite(led, 0);
 }
 
+// CORS tells browsers it is OK to let JavaScript make data requests to a
+// different server. This is not allowed by default out of security concerns.
+// Example: sneaky code from one site tries to call another site with the
+// current user's logged-in credentials, personal information, etc.
+// This ESP32 web server has no user credential or similarly vital information
+// risk, so we are OK with "*" a.k.a. leaving the front door unlocked.
 void handleCORS() {
-  if(allow_all_origin) {
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-  }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
 }
 
 bool update_led(int32_t led_ma) {
