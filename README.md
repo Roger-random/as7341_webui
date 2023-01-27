@@ -5,6 +5,20 @@ with the AS7341 via I2C and serves the interface to a browser via WiFi.
 
 ---
 
+## File Directory Structure
+
+`/` : GitHub standard files (LICENSE, README) and files to run a web server
+via Docker Compose for development & testing purposes.
+
+`/basic/` : Bare-bones early draft of HTML UI. No CSS, no external dependency,
+no stylesheet. Kept around for diagnostics and debugging.
+
+`/standard/` : Default HTML UI
+
+`/esp32-as7341/` : Arduino IDE sketch for ESP32 Arduino Core
+
+---
+
 ## Hardware
 * ESP32 microcontroller. Developed on chip_id ESP32-D0WDQ6 (revision 1)
 of [ESP32 mini development board](https://amzn.to/3kx92rp)(*)
@@ -18,7 +32,7 @@ ESP32 activity indicator LED on GPIO2 (can be changed in Arduino sketch.)
 
 ---
 
-## Instructions for use:
+## Instructions
 
 1. [Install ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) if not already present.
 2. Download or "git clone" this repository
