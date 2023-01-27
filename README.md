@@ -10,8 +10,8 @@ with the AS7341 via I2C and serves the interface to a browser via WiFi.
 `/` : GitHub standard files (LICENSE, README) and files to run a web server
 via Docker Compose for development & testing purposes.
 
-`/basic/` : Bare-bones early draft of HTML UI. No CSS, no external dependency,
-no stylesheet. Kept around for diagnostics and debugging.
+`/basic/` : Bare-bones early draft of HTML UI. No CSS, no external dependency.
+Kept for diagnostics and debugging.
 
 `/standard/` : Default HTML UI
 
