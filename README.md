@@ -32,7 +32,7 @@ ESP32 activity indicator LED on GPIO2 (can be changed in Arduino sketch.)
 
 ---
 
-## Instructions
+## Installation and Usage
 
 1. [Install ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) if not already present.
 2. Download or "git clone" this repository
@@ -112,6 +112,25 @@ the hard work and creates a pull request.) Want to tackle the challenge?
 ### Raw Sensor Data
 
 At the bottom of the page, raw sensor values as sent by ESP32 are listed.
+
+---
+
+## Sensor query loop
+
+ESP32 communicates with AS7341 over a hardwired connection via I2C protocol.
+ESP32 communicates with browser over WiFi via HTTP GET. JavaScript running in 
+browser initiates every sensor read opeation with an HTTP GET to ESP32.
+ESP32 Arduino sketch translates parameters into an I2C command to
+AS7341 sensor. When the sensor responds, ESP32 formats sensor data into a string
+in JSON format that is returned to the browser for rendering using Chart.js
+
+```mermaid
+sequenceDiagram
+    Browser->>+ESP32: HTTP GET with parameters
+    ESP32->>+AS7341: I2C Read operation
+    AS7341-->>-ESP32: I2C Response with sensor data
+    ESP32-->>-Browser: HTTP Response with sensor data in JSON
+```
 
 ---
 
